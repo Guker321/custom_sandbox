@@ -33,7 +33,6 @@ const App = () => {
       write: false,
       plugins: [unpkgPathPlugin()]
     })
-    console.log(result.outputFiles[0].text);
     setCode(result.outputFiles[0].text);
   };
 
