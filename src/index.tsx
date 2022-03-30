@@ -2,6 +2,7 @@ import * as esbuild from 'esbuild-wasm';
 import { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { unpkgPathPlugin } from './plugins/unpkg-path-plugin';
+import { fetchPlugin } from './plugins/fetch-plugin';
 
 
 const App = () => {
@@ -21,17 +22,13 @@ const App = () => {
   const submitCodeHanlder = async () => {
     if (!codeRef.current) {
       return;
-    }
-    // const result = await esbuild.transform(input, {
-    //   loader: 'jsx',
-    //   target: 'es2015',
-    // })
+    };
 
     const result = await esbuild.build({
       entryPoints: ['index.js'],
       bundle: true,
       write: false,
-      plugins: [unpkgPathPlugin()]
+      plugins: [unpkgPathPlugin(), fetchPlugin(input)],
     })
     setCode(result.outputFiles[0].text);
   };
