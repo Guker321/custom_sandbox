@@ -9,11 +9,12 @@ const App = () => {
   const [input, setInput] = useState('');
   const [code, setCode] = useState<any>();
   const codeRef: any = useRef();
+  const iframe: any = useRef();
 
   const startService = async () => {
     await esbuild.initialize({
       worker: true,
-      wasmURL: '/esbuild.wasm'
+      wasmURL: 'https://unpkg.com/esbuild-wasm@0.14.28/esbuild.wasm'
     });
     codeRef.current = true;
     console.log('esbuild init!')
@@ -29,9 +30,24 @@ const App = () => {
       bundle: true,
       write: false,
       plugins: [unpkgPathPlugin(), fetchPlugin(input)],
-    })
-    setCode(result.outputFiles[0].text);
+    });
+    // setCode(result.outputFiles[0].text);
+    iframe.current.contentWindow.postMessage(result.outputFiles[0].text, '*');
   };
+
+  const html = `
+    <html>
+      <head></head>
+      <body>
+        <div id='root'></div>
+        <script>
+          window.addEventListener('message', (event) => {
+            eval(event.data);
+          }, false);
+        </script>
+      </body>
+    </html>
+  `;
 
   const inputHandler: React.ChangeEventHandler<HTMLTextAreaElement> = (event) => {
     setInput(event.target.value);
@@ -48,8 +64,9 @@ const App = () => {
         <button onClick={submitCodeHanlder}>Submit</button>
       </div>
       <pre>{code}</pre>
+      <iframe ref={iframe} title='box' sandbox='allow-scripts' srcDoc={html}></iframe>
     </div>
   )
-}
+};
 
 ReactDOM.render(<App />, document.querySelector('#root'))
