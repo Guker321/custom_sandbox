@@ -7,7 +7,6 @@ import { fetchPlugin } from './plugins/fetch-plugin';
 
 const App = () => {
   const [input, setInput] = useState('');
-  const [code, setCode] = useState<any>();
   const codeRef: any = useRef();
   const iframe: any = useRef();
 
@@ -20,10 +19,12 @@ const App = () => {
     console.log('esbuild init!')
   };
 
-  const submitCodeHanlder = async () => {
+  const submitCodeHandler = async () => {
     if (!codeRef.current) {
       return;
     };
+
+    iframe.current.srcdoc = html;
 
     const result = await esbuild.build({
       entryPoints: ['index.js'],
@@ -31,7 +32,6 @@ const App = () => {
       write: false,
       plugins: [unpkgPathPlugin(), fetchPlugin(input)],
     });
-    // setCode(result.outputFiles[0].text);
     iframe.current.contentWindow.postMessage(result.outputFiles[0].text, '*');
   };
 
@@ -42,7 +42,13 @@ const App = () => {
         <div id='root'></div>
         <script>
           window.addEventListener('message', (event) => {
-            eval(event.data);
+            try{
+              eval(event.data);
+            } catch (error) {
+              const root = document.getElementById('root');
+              root.innerHTML = '<div style="color: red;"><h4>Runtime Error</h4>' + error + '</div>';
+              console.error(error)
+            }
           }, false);
         </script>
       </body>
@@ -61,10 +67,9 @@ const App = () => {
     <div>
       <textarea value={input} onChange={inputHandler}></textarea>
       <div>
-        <button onClick={submitCodeHanlder}>Submit</button>
+        <button onClick={submitCodeHandler}>Submit</button>
       </div>
-      <pre>{code}</pre>
-      <iframe ref={iframe} title='box' sandbox='allow-scripts' srcDoc={html}></iframe>
+      <iframe ref={iframe} title='preview' sandbox='allow-scripts' srcDoc={html}></iframe>
     </div>
   )
 };
