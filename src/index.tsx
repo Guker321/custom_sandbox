@@ -1,12 +1,16 @@
 import * as esbuild from 'esbuild-wasm';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { unpkgPathPlugin } from './plugins/unpkg-path-plugin';
 import { fetchPlugin } from './plugins/fetch-plugin';
+import CodeEditor from './components/code-editor';
+import { observer } from 'mobx-react-lite';
+import editorStore from './store/editorStore';
 
 
-const App = () => {
-  const [input, setInput] = useState('');
+const App = observer(() => {
+  // const [input, setInput] = useState('');
+  const { codeData } = editorStore;
   const codeRef: any = useRef();
   const iframe: any = useRef();
 
@@ -30,7 +34,7 @@ const App = () => {
       entryPoints: ['index.js'],
       bundle: true,
       write: false,
-      plugins: [unpkgPathPlugin(), fetchPlugin(input)],
+      plugins: [unpkgPathPlugin(), fetchPlugin(codeData)],
     });
     iframe.current.contentWindow.postMessage(result.outputFiles[0].text, '*');
   };
@@ -55,9 +59,7 @@ const App = () => {
     </html>
   `;
 
-  const inputHandler: React.ChangeEventHandler<HTMLTextAreaElement> = (event) => {
-    setInput(event.target.value);
-  };
+  
 
   useEffect(() => {
     startService();
@@ -65,13 +67,16 @@ const App = () => {
 
   return (
     <div>
-      <textarea value={input} onChange={inputHandler}></textarea>
+      <CodeEditor
+        initialValue='const a = 1;'
+      />
+      {/* <textarea value={codeData}></textarea> */}
       <div>
         <button onClick={submitCodeHandler}>Submit</button>
       </div>
       <iframe ref={iframe} title='preview' sandbox='allow-scripts' srcDoc={html}></iframe>
     </div>
   )
-};
+});
 
 ReactDOM.render(<App />, document.querySelector('#root'))
